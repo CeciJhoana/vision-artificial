@@ -3,3 +3,5 @@ __pycache__
 *.pyc
 */__pycache__
 /virEnv
+/data/data_set/images
+/data/data_set/videos
