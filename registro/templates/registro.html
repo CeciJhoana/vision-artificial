@@ -1,4 +1,5 @@
 <!-- registro/templates/registro/register.html -->
+<!-- registro/templates/registro/register.html -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -15,12 +16,16 @@
         }
 
         .container {
-            max-width: 600px;
+            max-width: 400px;
             margin: 50px auto;
             background-color: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-title {
+            text-align: center;
         }
 
         .form-group {
@@ -30,33 +35,48 @@
         .form-group label {
             display: block;
             margin-bottom: 5px;
+            margin-left: 20px; /* Desplazar ligeramente a la derecha */
         }
 
         .form-group input {
-            width: 100%;
+            width: 90%; /* Ajustar el tamaño del input */
             padding: 8px;
+            margin-left: 20px; /* Desplazar ligeramente a la derecha */
             box-sizing: border-box;
         }
 
-        .form-group input[type="submit"] {
+        .form-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .form-buttons input[type="submit"],
+        .form-buttons input[type="button"] {
+            width: auto;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+        }
+
+        .form-buttons input[type="submit"] {
             background-color: #4CAF50;
             color: white;
             border: none;
             cursor: pointer;
         }
 
-        .form-group input[type="submit"]:hover {
+        .form-buttons input[type="submit"]:hover {
             background-color: #45a049;
         }
 
-        .form-group input[type="button"] {
+        .form-buttons input[type="button"] {
             background-color: #f44336;
             color: white;
             border: none;
             cursor: pointer;
         }
 
-        .form-group input[type="button"]:hover {
+        .form-buttons input[type="button"]:hover {
             background-color: #e53935;
         }
 
@@ -69,11 +89,11 @@
 </head>
 <body>
     <div class="container">
-        <h2>Formulario de Registro</h2>
+        <h2 class="form-title">Formulario de Registro</h2>
         <form method="post">
             {% csrf_token %}
             {{ form.as_p }}
-            <div class="form-group">
+            <div class="form-buttons">
                 <input type="submit" value="Registrar">
                 <input type="button" value="Cerrar" onclick="window.location.href='/'">
             </div>

@@ -16,4 +16,4 @@ def registro(request):
     return render(request, 'registro.html', {'form': form})
 
 def success(request):
-    return render(request, 'registro/success.html')
+    return render(request, 'success.html')
