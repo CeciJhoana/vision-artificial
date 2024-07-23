@@ -95,6 +95,7 @@
             {{ form.as_p }}
             <div class="form-buttons">
                 <input type="submit" value="Registrar">
+                <input type="button" value="Registro Biométrico" onclick="window.location.href='{% url 'video_capture' %}'">
                 <input type="button" value="Cerrar" onclick="window.location.href='/'">
             </div>
         </form>

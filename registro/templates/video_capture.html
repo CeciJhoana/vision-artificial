@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registro Biométrico</title>
+    <style>
+        .container {
+            display: flex;
+        }
+        .instructions {
+            flex: 1;
+            padding: 20px;
+        }
+        .video {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        video {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="instructions">
+            <h2>Instrucciones</h2>
+            <p>1. Mire a la pantalla.</p>
+            <p>2. Parpadee tres veces.</p>
+            <p>3. La captura de su imagen se realizará automáticamente.</p>
+        </div>
+        <div class="video">
+            <img src="{% url 'video_feed' %}" width="640" height="480">
+        </div>
+    </div>
+</body>
+</html>
