@@ -230,6 +230,8 @@ def gen_frames(request):
 
 
 
+
+
 def video_feed(request):
     return StreamingHttpResponse(gen_frames(request), content_type='multipart/x-mixed-replace; boundary=frame')
 
