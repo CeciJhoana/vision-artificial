@@ -1,8 +1,13 @@
 import math
+from django.http import HttpResponse
+from urllib import request
 from django.shortcuts import render, redirect
 from .forms import RegistroForm
-from .models import Usuario
+from .models import Foto, Usuario
 from django.http import StreamingHttpResponse
+from django.core.files.base import ContentFile
+from PIL import Image as PILImage
+from io import BytesIO
 import mediapipe.python.solutions.face_mesh_connections as face_mesh_connections
 #-------Librerias------ 
 import cv2
@@ -15,15 +20,20 @@ def registro(request):
     if request.method == 'POST':
         form = RegistroForm(request.POST)
         if form.is_valid():
-            form.save()  # Guarda el usuario en la base de datos
-            return redirect('success')
+            user = form.save()  # Guarda el usuario en la base de datos
+            request.session['usuario_id'] = user.id  # Guarda el ID del usuario en la sesión
+            return redirect('video_capture')
     else:
         form = RegistroForm()
 
     return render(request, 'registro.html', {'form': form})
 
-def success(request):
+def success_page(request):
+    #return HttpResponse("Registro guardado con éxito")
     return render(request, 'success.html')
+
+
+
 
 def video_capture(request):
     return render(request, 'video_capture.html')
@@ -110,7 +120,7 @@ def handle_face_detection(faces, frame, ancho, alto, offsetx, offsety, confThres
             cv2.rectangle(frame, (xi, yi, an, al), (255, 0, 255), 2)
     return xi, yi, an, al, xf, yf
 
-def gen_frames():
+def gen_frames(request):
     camera = cv2.VideoCapture(0)  # Usa la cámara del dispositivo
     parpadeo=False
     conteo = 0
@@ -121,6 +131,13 @@ def gen_frames():
     #tumbral de presición
     confThreshold =0.5
     mpDraw, ConfigDraw, FaceMesh, detector = initialize_face_detection()
+   
+    # Obtener el usuario que se está registrando
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return
+
+    usuario = Usuario.objects.get(id=usuario_id)
 
     while True:
         success, frame = camera.read()
@@ -161,12 +178,34 @@ def gen_frames():
 
                                 # condicion para sacar foto con los ojos abiertos
                                 if longitud1 > 15 and longitud2 > 15: 
+                                    if yi < 0: yi = 0
+                                    if xi < 0: xi = 0
+                                    if yf > frameSave.shape[0]: yf = frameSave.shape[0]
+                                    if xf > frameSave.shape[1]: xf = frameSave.shape[1]
                                     # Vamos a cortar las pixeles
                                     cut = frameSave[yi:yf, xi:xf] 
                                     # Almacenar el rotro en la base de datos segun al usuario y los datos que se puso en registro
-
-                                    #Pasar siguiente paso 
-                                    step = 1
+                                    if cut.size > 0:  # Verificar que la imagen no está vacía
+                                        # Convertir la imagen en formato compatible con Django usando Pillow
+                                        image_pil = PILImage.fromarray(cv2.cvtColor(cut, cv2.COLOR_BGR2RGB))
+                                        image_io = BytesIO()
+                                        image_pil.save(image_io, format='JPEG')
+                                        image_file = ContentFile(image_io.getvalue(), 'rostro.jpg')
+                                        cv2.rectangle(frame,(xi,yi,an,al), (0,255,0),2)
+                                        # Almacenar la imagen en la base de datos
+                                        Foto.objects.create(usuario=usuario, imagen=image_file)
+                                        step = 1
+                                        
+                                        # Romper el ciclo while para detener la captura de video
+                                       # camera.release()
+                                        #cv2.destroyAllWindows()
+                                        
+                                       # return HttpResponse("DONE")
+                                       
+                                       # return redirect('success')
+                                        break
+                                    else:
+                                        print("Error: La imagen recortada está vacía.")
                                                 
                         else : conteo = 0
 
@@ -181,11 +220,16 @@ def gen_frames():
             frame = buffer.tobytes()
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-            
+    
+    camera.release()  # Libera el recurso de la cámara    
+    cv2.destroyAllWindows()
+    return render(request, 'success.html')
+    #yield (b'--frame\r\n'
+     #      b'Content-Type: text/plain\r\n\r\n' + b'DONE' + b'\r\n')
         
 
 
 
 def video_feed(request):
-    return StreamingHttpResponse(gen_frames(), content_type='multipart/x-mixed-replace; boundary=frame')
+    return StreamingHttpResponse(gen_frames(request), content_type='multipart/x-mixed-replace; boundary=frame')
 
