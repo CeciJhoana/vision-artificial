@@ -15,8 +15,21 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from registro import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include('home.urls')),
+    path('registro/', include('registro.urls')),
+    path('video_capture/', views.video_capture, name='video_capture'),
+    path('video_feed/', views.video_feed, name='video_feed'),
+    path('inicio_sesion/', include('inicio_sesion.urls')),
+
 ]
+
+# Configuración para servir archivos de medios durante el desarrollo
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

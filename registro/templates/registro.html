@@ -1,0 +1,105 @@
+<!-- registro/templates/registro/register.html -->
+<!-- registro/templates/registro/register.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-title {
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            margin-left: 20px; /* Desplazar ligeramente a la derecha */
+        }
+
+        .form-group input {
+            width: 90%; /* Ajustar el tamaño del input */
+            padding: 8px;
+            margin-left: 20px; /* Desplazar ligeramente a la derecha */
+            box-sizing: border-box;
+        }
+
+        .form-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .form-buttons input[type="submit"],
+        .form-buttons input[type="button"] {
+            width: auto;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+        }
+
+        .form-buttons input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .form-buttons input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        .form-buttons input[type="button"] {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .form-buttons input[type="button"]:hover {
+            background-color: #e53935;
+        }
+
+        .errorlist {
+            color: red;
+            list-style-type: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="form-title">Formulario de Registro</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="form-buttons">
+                <input type="submit" value="Registro Biométrico" onclick="window.location.href='{% url 'video_capture' %}'">
+                <input type="submit" value="Registrar">
+                <!--input type="button" value="Registro Biométrico" onclick="window.location.href='{% url 'video_capture' %}'"-->
+                <input type="button" value="Cerrar" onclick="window.location.href='/'">
+            </div>
+        </form>
+    </div>
+</body>
+</html>
