@@ -26,6 +26,7 @@ urlpatterns = [
     path('registro/', include('registro.urls')),
     path('video_capture/', views.video_capture, name='video_capture'),
     path('video_feed/', views.video_feed, name='video_feed'),
+
 ]
 
 # Configuración para servir archivos de medios durante el desarrollo

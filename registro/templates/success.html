@@ -2,10 +2,23 @@
 <html>
 <head>
     <title>Registro Exitoso</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: '¡Registro exitoso!',
+                text: 'Tu imagen ha sido registrada con éxito.',
+                icon: 'success',
+                confirmButtonText: 'Ir al inicio',
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{% url 'index' %}";
+                }
+            });
+        });
+    </script>
 </head>
 <body>
-    <h1>¡Registro exitoso!</h1>
-    <p>La captura de la imagen se ha realizado con éxito.</p>
-    <button onclick="window.location.href='{% url 'index' %}'">Ir a la página de inicio</button>
 </body>
 </html>

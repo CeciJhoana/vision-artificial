@@ -16,11 +16,13 @@
             justify-content: center;
             align-items: center;
         }
-        video {
+        img {
             border: 1px solid #ddd;
             border-radius: 8px;
         }
     </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <h1>Captura de Video</h1>
@@ -32,11 +34,37 @@
             <p>3. La captura de su imagen se realizará automáticamente.</p>
         </div>
         <div class="video">
-            <!--img src="{% url 'video_feed' %}" width="640" height="480"-->
             <img id="video-frame" src="{% url 'video_feed' %}" width="640" height="480" alt="Video Feed">
         </div>
-        
     </div>
-   
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const checkSuccess = () => {
+                fetch("{% url 'check_success' %}")
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.exito)
+                        if (data.exito) {
+                            Swal.fire({
+                                title: '¡Registro exitoso!',
+                                text: 'Tu imagen ha sido registrada con éxito.',
+                                icon: 'success',
+                                confirmButtonText: 'Ir al inicio',
+                                allowOutsideClick: false
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = "{% url 'index' %}";
+                                }
+                            });
+                        } else {
+                            setTimeout(checkSuccess, 1000); // Revisa el estado cada segundo
+                        }
+                    });
+            };
+
+            checkSuccess();
+        });
+    </script>
 </body>
 </html>
