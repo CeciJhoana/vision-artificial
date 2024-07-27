@@ -1,41 +1,41 @@
 from django.shortcuts import render, redirect
 from django.http import StreamingHttpResponse, JsonResponse
 from django.urls import reverse
-from .models import Usuario, Foto
 import cv2
-from io import BytesIO
-from PIL import Image as PILImage
-from django.core.files.base import ContentFile
-from .forms import RegistroForm
+import numpy as np
 import math
-from PIL import Image as PILImage
-import mediapipe.python.solutions.face_mesh_connections as face_mesh_connections
 import face_recognition as fr
 import mediapipe as mp
-from .models import Foto, Usuario
-from .forms import RegistroForm
+import mediapipe.python.solutions.face_mesh_connections as face_mesh_connections
+from registro.models import Foto, Usuario
 
 # Variable global para almacenar el estado de éxito
 success_status = {}
+# Create your views here.
 
-def registro(request):
-    if request.method == 'POST':
-        form = RegistroForm(request.POST)
-        if form.is_valid():
-            user = form.save() # Guarda el usuario en la base de datos
-            request.session['usuario_id'] = user.id  # Guarda el ID del usuario en la sesión
-            return redirect('video_capture')
-    else:
-        form = RegistroForm()
-
-    return render(request, 'registro.html', {'form': form})
-
-def video_capture(request):
+def iniciar_sesion(request):
     exito = request.GET.get('exito')
-    return render(request, 'video_capture.html', {'exito': exito})
+    return render(request, 'inicio_sesion.html', {'exito': exito})
+
+def comparar_fotos(faces, facescode):
+    fotos = Foto.objects.all()
+    known_face_encodings = [fr.face_encodings(fr.load_image_file(foto.imagen.path))[0] for foto in fotos]
+    known_face_ids = [foto.usuario.id for foto in fotos]
+
+    for face_encoding in facescode:
+        matches = fr.compare_faces(known_face_encodings, face_encoding)
+        face_distances = fr.face_distance(known_face_encodings, face_encoding)
+        best_match_index = np.argmin(face_distances)
+
+        if matches[best_match_index]:
+            return known_face_ids[best_match_index]
+    return None
+
+                                                    
+    
 
 def video_feed(request):
-    return StreamingHttpResponse(capture_and_save_image(request), content_type='multipart/x-mixed-replace; boundary=frame')
+    return StreamingHttpResponse(capture_and_compare_image(request), content_type='multipart/x-mixed-replace; boundary=frame')
 
 # Inicializa los objetos y configuraciones para la detección de rostros y la malla facial
 def initialize_face_detection():
@@ -115,7 +115,7 @@ def handle_face_detection(faces, frame, ancho, alto, offsetx, offsety, confThres
     return xi, yi, an, al, xf, yf
 
 
-def capture_and_save_image(request):
+def capture_and_compare_image(request):
     # Usa la cámara del dispositivo
     camera = cv2.VideoCapture(0)
     if not camera.isOpened():
@@ -123,6 +123,7 @@ def capture_and_save_image(request):
 
     parpadeo = False
     conteo = 0
+    step=0
     # Offset
     offsety = 40
     offsetx = 20
@@ -130,13 +131,8 @@ def capture_and_save_image(request):
     confThreshold = 0.5
     mpDraw, ConfigDraw, FaceMesh, detector = initialize_face_detection()
     
-    # Obtener el usuario que se está registrando
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        camera.release()
-        return JsonResponse({'redirect_url': reverse('registro')})
-
-    usuario = Usuario.objects.get(id=usuario_id)
+    
+   
 
     while True:
         success, frame = camera.read()
@@ -145,14 +141,14 @@ def capture_and_save_image(request):
             continue
 
         frameSave = frame.copy()
-
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         res = process_face_mesh(frame, FaceMesh, mpDraw, ConfigDraw)
         #lista de resuktados
         px, py, lista = get_landmark_coordinates(res, frame)
 
         if len(lista) == 468:
             longitud1, longitud2 = calculate_distances(lista)
-            faces = detect_faces(frame, detector, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            faces = detect_faces(frame, detector, rgb)
             if faces.detections is not None:
                 xi, yi, an, al, xf, yf = handle_face_detection(faces, frame, frame.shape[1], frame.shape[0], offsetx, offsety, confThreshold)
                 x7, y7 = lista[70][1:]
@@ -173,25 +169,16 @@ def capture_and_save_image(request):
                         cv2.rectangle(frame, (xi, yi, an, al), (0, 255, 0), 2)
                         # condicion para sacar foto con los ojos abiertos
                         if longitud1 > 15 and longitud2 > 15:
-                            if yi < 0: yi = 0
-                            if xi < 0: xi = 0
-                            if yf > frameSave.shape[0]: yf = frameSave.shape[0]
-                            if xf > frameSave.shape[1]: xf = frameSave.shape[1]
-                            # Vamos a cortar las pixeles
-                            # Almacenar el rotro en la base de datos segun al usuario y los datos que se puso en registro
-                            cut = frameSave[yi:yf, xi:xf]
-                            if cut.size > 0: # Verificar que la imagen no está vacía
-                                image_pil = PILImage.fromarray(cv2.cvtColor(cut, cv2.COLOR_BGR2RGB))
-                                image_io = BytesIO()
-                                image_pil.save(image_io, format='JPEG')
-                                image_file = ContentFile(image_io.getvalue(), 'rostro.jpg')
-                                # Almacenar la imagen en la base de datos
-                                Foto.objects.create(usuario=usuario, imagen=image_file)
-                                # Actualizar el estado de éxito
-                                success_status[usuario_id] = True  
-                                break
-                            else:
-                                print("Error: La imagen recortada está vacía.")
+                            faces = fr.face_locations(rgb)
+                            facescode = fr.face_encodings(rgb, faces)
+                            usuario_id = comparar_fotos(faces, facescode)
+                            if usuario_id:
+                                print("----------Estamos aqui---------------")
+                                print (usuario_id)
+                                request.session['usuario_id'] = usuario_id
+                                success_status[usuario_id] = True
+                            break
+                            
                 else:
                     conteo = 0
         
@@ -199,6 +186,8 @@ def capture_and_save_image(request):
         frame = buffer.tobytes()
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        
+        
     
     camera.release() # Libera el recurso de la cámara   
     cv2.destroyAllWindows()

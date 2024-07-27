@@ -1,12 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro Exitoso</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: '¡Registro exitoso!',
+                text: 'Tu imagen ha sido registrada con éxito.',
+                icon: 'success',
+                confirmButtonText: 'Ir al inicio',
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{% url 'index' %}";
+                }
+            });
+        });
+    </script>
 </head>
 <body>
-    <h2>¡Registro exitoso!</h2>
-    <p>Tu registro se ha completado correctamente.</p>
 </body>
 </html>
